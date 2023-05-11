@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Juego de Aaron</title>
+<h1>Juego de Aaron</h1>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.52.0/dist/phaser.js"></script>
+    <script src="/index.js"></script>
+    <script>
+
+        document.getElementById("Score").innerHTML = hitBomb();
+        </script>
+<p style="display:none;"id="score"></p>
+<p style="display:none;"id="nombre"></p>
+
+<div class="container">
+  <div id="game-container">
+
+<div class="text-right">
+    <div class="container p-4">
+
+        
+                    <form id="task-form">
+                      <input
+                        type="hidden"
+                        id="task-title"
+                        class="form-control mb-3"
+                        class="My First Title"
+                        placeholder="Nombre"
+                      />
+<input
+type="hidden"
+id="task-description"
+class="form-control mb-3"
+class="My First Title"
+/>
+
+                      <input type="hidden" id="task-stats" class="form-control mb-3"name="score">
+
+                      <button class="btn btn-primary" id="btn-task-form" style="display: none;">Guardar</button>
+                    </form>
+
+
+                  </div>
+                </div>
+              <!-- Tasks List -->
+                <div class="col-md-5" id="tasks-container"></div>
+
+<div>
+</div>
+
+
+  </head>
+
+</html>
+
+    <script type="module">
+    import {
+        onGetTasks,
+        saveTask,
+        deleteTask,
+        getTask,
+        updateTask,
+        getTasks,
+      } from "../scripts/firebase.js";
+      
+      const taskForm = document.getElementById("task-form");
+      const tasksContainer = document.getElementById("tasks-container");
+      
+      let editStatus = false;
+      let id = "";
+      
+      window.addEventListener("DOMContentLoaded", async (e) => {
+        // const querySnapshot = await getTasks();
+        // querySnapshot.forEach((doc) => {
+        //   console.log(doc.data());
+        // });
+      
+        onGetTasks((querySnapshot) => {
+          tasksContainer.innerHTML = "";
+      
+          querySnapshot.forEach((doc) => {
+            const task = doc.data();
+      
+            tasksContainer.innerHTML += `
+            <div class="card mt-2 border-primary text-right">
+  <div class="card-body">
+    Puntuacion:
+    <p class="h5">Nombre: ${task.title}</p>
+    <p>${task.description}</p>
+    <p>Score:${task.stats}</p>
+  </div>
+</div>
+`;
+          });
+      
+
+          const btnsDelete = tasksContainer.querySelectorAll(".btn-delete");
+          btnsDelete.forEach((btn) =>
+            btn.addEventListener("click", async ({ target: { dataset } }) => {
+              try {
+                await deleteTask(dataset.id);
+              } catch (error) {
+                console.log(error);
+              }
+            })
+          );
+      
+          const btnsEdit = tasksContainer.querySelectorAll(".btn-edit");
+          btnsEdit.forEach((btn) => {
+            btn.addEventListener("click", async (e) => {
+              try {
+                const doc = await getTask(e.target.dataset.id);
+                const task = doc.data();
+                taskForm["task-title"].value = task.title;
+                taskForm["task-description"].value = task.description;
+                taskForm["task-stats"].value = task.stats;
+    
+                editStatus = true;
+                id = doc.id;
+                taskForm["btn-task-form"].innerText = "Update";
+              } catch (error) {
+                console.log(error);
+              }
+            });
+          });
+        });
+      });
+      
+      taskForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+      
+        const title = taskForm["task-title"];
+        const description = taskForm["task-description"];
+        const stats = taskForm["task-stats"];
+    
+        try {
+          if (!editStatus) {
+            await saveTask(title.value, description.value,stats.value);
+          } else {
+            await updateTask(id, {
+              title: title.value,
+              description: description.value,
+              stats: stats.value
+            });
+      
+            editStatus = false;
+            id = "";
+            taskForm["btn-task-form"].innerText = "Save";
+          }
+      
+          taskForm.reset();
+          title.focus();
+        } catch (error) {
+          console.log(error);
+        }
+      });
+      
+    </script>
+
+
+<style type="text/css">
+  body {
+    margin: 0;
+  }
+
+  .container {
+    display: inline-block;
+    flex-wrap: wrap;
+  }
+
+  canvas {
+    width: 60%;
+    float: left;
+  }
+
+  #tasks-container {
+    width: 30%;
+    float: right;
+    margin-top: 20px;
+    margin-right: 20px;
+
+  }
+</style>

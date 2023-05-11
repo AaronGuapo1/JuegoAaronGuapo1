@@ -1,0 +1,9 @@
+export const deleteTask = (id) => deleteDoc(doc(db, "aaronguapo", id));
+
+export const getTask = (id) => getDoc(doc(db, "aaronguapo", id));
+
+export const updateTask = (id, newFields) =>
+ updateDoc(doc(db, "aaronguapo", id), newFields);
+
+export const getTasks = () => getDocs(collection(db, "aaronguapo"));
+
